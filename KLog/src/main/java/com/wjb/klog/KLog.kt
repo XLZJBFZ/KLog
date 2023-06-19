@@ -2,13 +2,17 @@ package com.wjb.klog
 
 import android.util.Log
 import java.lang.reflect.Method
-import java.util.Stack
 
 object KLog {
     private val logMessageList = mutableListOf<LogMessage>()
     private val methodMap = hashMapOf<String, Method>()
     var enable = true
-    fun log(logType: LogType, tag: String = "TAG", contentScope: KLog.() -> Unit) {
+    fun log(
+        logType: LogType = LogType.DEBUG,
+        tag: String = "TAG",
+        connectionSymbol: String = "->",
+        contentScope: KLog.() -> Unit
+    ) {
         if (!enable) return
         contentScope(this)
         val methodName = when (logType) {
@@ -27,13 +31,13 @@ object KLog {
             )
         }
         val method: Method = methodMap[methodName]!!
-        val divider="-".repeat(10)
+        val divider = "-".repeat(10)
         method.invoke(null, tag, "$divider$tag$divider")
         logMessageList.forEach { (description, content) ->
             method.invoke(
                 null,
                 tag,
-                "$description -> ${if (content is Iterable<*>) content.joinToString() else content}"
+                "$description $connectionSymbol ${if (content is Iterable<*>) content.joinToString() else content}"
             )
         }
         method.invoke(null, tag, "$divider$tag$divider")
