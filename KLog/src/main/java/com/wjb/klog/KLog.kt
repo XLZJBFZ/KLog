@@ -4,18 +4,16 @@ import android.util.Log
 import java.lang.reflect.Method
 
 object KLog {
-    private val logMessageList = mutableListOf<LogMessage>()
     private val methodMap = hashMapOf<String, Method>()
     var enable = true
     fun log(
-        logType: LogType = LogType.DEBUG,
-        tag: String = "TAG",
-        connectionSymbol: String = "->",
-        contentScope: KLog.() -> Unit
+        contentScope: KLogBuilder.() -> Unit
     ) {
         if (!enable) return
-        contentScope(this)
-        val methodName = when (logType) {
+        val kLogInstance = KLogBuilder()
+        contentScope(kLogInstance)
+        if (!kLogInstance.enable) return
+        val methodName = when (kLogInstance.logType) {
             LogType.ASSERT -> "wtf"
             LogType.DEBUG -> "d"
             LogType.ERROR -> "e"
@@ -31,21 +29,36 @@ object KLog {
             )
         }
         val method: Method = methodMap[methodName]!!
-        val divider = "-".repeat(10)
-        method.invoke(null, tag, "$divider$tag$divider")
-        logMessageList.forEach { (description, content) ->
-            method.invoke(
-                null,
-                tag,
-                "$description $connectionSymbol ${if (content is Iterable<*>) content.joinToString() else content}"
-            )
+        kLogInstance.run{
+            divider?.let {
+                method.invoke(null, tag, it)
+            }
+            logMessageList.forEach { (description, content) ->
+                method.invoke(
+                    null,
+                    tag,
+                    "$description $connectionSymbol ${converter(content)}"
+                )
+            }
+            divider?.let {
+                method.invoke(null, tag, it)
+            }
         }
-        method.invoke(null, tag, "$divider$tag$divider")
-        logMessageList.clear()
     }
 
-    infix fun String.with(content: Any?) {
-        logMessageList.add(LogMessage(this, content))
+    class KLogBuilder {
+        var enable = true
+        var logType: LogType = LogType.DEBUG
+        var tag = "TAG"
+        var divider: String? = "-".repeat(10) + tag + "-".repeat(10)
+        var connectionSymbol = "->"
+        var converter: (Any?) -> String = {
+            if (it is Iterable<*>) it.joinToString() else it.toString()
+        }
+        val logMessageList = mutableListOf<LogMessage>()
+        infix fun String.with(content: Any?) {
+            logMessageList.add(LogMessage(this, content))
+        }
     }
 
     sealed class LogType {
