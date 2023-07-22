@@ -6,6 +6,16 @@ import java.lang.reflect.Method
 object KLog {
     private val methodMap = hashMapOf<String, Method>()
     var enable = true
+    var logType: LogType = LogType.DEBUG
+    var tag = "TAG"
+    var divider: String? = "-".repeat(10) + tag + "-".repeat(10)
+    var connectionSymbol = "->"
+    var converter: (Any?) -> String = {
+        if (it is Iterable<*>) it.joinToString() else it.toString()
+    }
+    fun globalConfig(configScope:KLog.()->Unit){
+        configScope(this)
+    }
     fun log(
         contentScope: KLogBuilder.() -> Unit
     ) {
@@ -48,13 +58,11 @@ object KLog {
 
     class KLogBuilder {
         var enable = true
-        var logType: LogType = LogType.DEBUG
-        var tag = "TAG"
-        var divider: String? = "-".repeat(10) + tag + "-".repeat(10)
-        var connectionSymbol = "->"
-        var converter: (Any?) -> String = {
-            if (it is Iterable<*>) it.joinToString() else it.toString()
-        }
+        var logType: LogType = KLog.logType
+        var tag = KLog.tag
+        var divider: String? = KLog.divider
+        var connectionSymbol = KLog.connectionSymbol
+        var converter: (Any?) -> String = KLog.converter
         val logMessageList = mutableListOf<LogMessage>()
         infix fun String.with(content: Any?) {
             logMessageList.add(LogMessage(this, content))
