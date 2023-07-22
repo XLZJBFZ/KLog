@@ -5,7 +5,7 @@
 enable - 开关Log  
 logtype - log类型  
 tag - log的tag  
-divider - log上下的分割线 ，可为空，空则没有分割线
+divider - log上下的分割线 ，可为空，空则没有分割线  
 connectionSymbol - log中description和content的连接符号  
 converter - content转化为String的方法  
 globalConfig - 全局配置以上参数  
